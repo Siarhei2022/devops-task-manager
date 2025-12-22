@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Task Manager</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <style>
+    body {
+      font-family: system-ui, Arial, sans-serif;
+      margin: 0;
+      background: linear-gradient(180deg, #eef5fb, #ffffff);
+      color: #1f2937;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 32px auto;
+      padding: 0 16px;
+    }
+
+    h1 {
+      margin-bottom: 4px;
+      color: #1e40af;
+    }
+
+    .muted {
+      color: #475569;
+      margin-top: 0;
+    }
+
+    .panel {
+      background: #ffffff;
+      border: 1px solid #dbeafe;
+      border-radius: 10px;
+      padding: 16px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      margin: 12px 0;
+      flex-wrap: wrap;
+    }
+
+    input, select, button {
+      padding: 8px 10px;
+      font-size: 15px;
+      border-radius: 6px;
+      border: 1px solid #c7d2fe;
+    }
+
+    input {
+      flex: 1;
+    }
+
+    button {
+      background: #2563eb;
+      color: white;
+      cursor: pointer;
+      border: none;
+    }
+
+    button.secondary {
+      background: #e0e7ff;
+      color: #1e3a8a;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    .table-wrap {
+      display: flex;
+      justify-content: center;
+      margin-top: 12px;
+    }
+
+    table {
+      width: 100%;
+      max-width: 980px;
+      border-collapse: collapse;
+      background: #ffffff;
+      border: 1px solid #dbeafe;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    thead th {
+      background: #e0f2fe;
+      color: #1e3a8a;
+      text-align: left;
+      padding: 10px;
+      border-bottom: 1px solid #bfdbfe;
+    }
+
+    tbody td {
+      padding: 10px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #f8fafc;
+    }
+
+    select.todo {
+      background: #fff7ed;
+      color: #9a3412;
+    }
+
+    select.in_progress {
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+
+    select.done {
+      background: #ecfdf5;
+      color: #047857;
+    }
+
+    pre {
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      padding: 10px;
+      border-radius: 6px;
+      max-height: 300px;
+      overflow: auto;
+    }
+
+    .debug-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 18px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="panel">
+    <h1>Task Manager</h1>
+    <p class="muted">FastAPI • PostgreSQL • Docker</p>
+
+    <div class="row">
+      <input id="title" placeholder="New task title…" />
+      <button id="add">Add</button>
+      <button id="refresh" class="secondary">Refresh</button>
+    </div>
+
+    <div class="table-wrap panel table-panel">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Updated</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+          <tr><td colspan="6">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="debug-header">
+      <h3>Debug</h3>
+      <button id="toggleDebug" class="secondary">Hide</button>
+    </div>
+
+    <pre id="debug"></pre>
+  </div>
+</div>
+
+<script>
+  const tbody = document.getElementById("tbody");
+  const debug = document.getElementById("debug");
+  const titleEl = document.getElementById("title");
+  const toggleBtn = document.getElementById("toggleDebug");
+
+  const STATUSES = ["todo", "in_progress", "done"];
+  let debugVisible = true;
+
+  toggleBtn.onclick = () => {
+    debugVisible = !debugVisible;
+    debug.style.display = debugVisible ? "block" : "none";
+    toggleBtn.textContent = debugVisible ? "Hide" : "Show";
+  };
+
+  function setDebug(data) {
+    debug.textContent = JSON.stringify(data, null, 2);
+  }
+
+  async function api(path, options = {}, log = true) {
+    const res = await fetch(path, options);
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch { data = text; }
+
+    if (log) {
+      setDebug({
+        method: options.method || "GET",
+        path,
+        status: res.status,
+        response: data
+      });
+    }
+    return { ok: res.ok, data };
+  }
+
+  function fmt(d) {
+    return new Date(d).toLocaleString();
+  }
+
+  async function loadTasks(log = false) {
+    const r = await api("/tasks", {}, log);
+    if (!r.ok) return;
+
+    tbody.innerHTML = "";
+    for (const t of r.data) {
+      const tr = document.createElement("tr");
+
+      tr.innerHTML = `
+        <td>${t.id}</td>
+        <td>${t.title}</td>
+        <td></td>
+        <td>${fmt(t.created_at)}</td>
+        <td>${fmt(t.updated_at)}</td>
+        <td><button class="secondary">Delete</button></td>
+      `;
+
+      const select = document.createElement("select");
+      select.className = t.status;
+      for (const s of STATUSES) {
+        const o = document.createElement("option");
+        o.value = s;
+        o.textContent = s;
+        select.appendChild(o);
+      }
+      select.value = t.status;
+
+      select.onchange = async () => {
+        await api(`/tasks/${t.id}?status=${select.value}`, { method: "PATCH" }, true);
+        await loadTasks(false);
+      };
+
+      tr.children[2].appendChild(select);
+
+      tr.querySelector("button").onclick = async () => {
+        if (!confirm("Delete task?")) return;
+        await api(`/tasks/${t.id}`, { method: "DELETE" }, true);
+        await loadTasks(false);
+      };
+
+      tbody.appendChild(tr);
+    }
+  }
+
+  document.getElementById("add").onclick = async () => {
+    if (!titleEl.value.trim()) return;
+    await api(`/tasks?title=${encodeURIComponent(titleEl.value)}`, { method: "POST" }, true);
+    titleEl.value = "";
+    await loadTasks(false);
+  };
+
+  document.getElementById("refresh").onclick = () => loadTasks(true);
+
+  loadTasks(false);
+</script>
+
+</body>
+</html>
