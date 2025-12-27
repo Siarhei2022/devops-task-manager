@@ -2,22 +2,33 @@ name: Main - CI + Build & Push
 
 on:
   push:
-    branches: ["main"]
+    branches:
+      - main
 
 permissions:
   contents: read
   packages: write
 
 jobs:
+  # ---------- CI (tests + lint) ----------
   ci:
     uses: ./.github/workflows/reusable-ci.yml
 
+  # ---------- Build & Push Docker image ----------
   build-and-push:
     runs-on: ubuntu-latest
-    needs: [ci]
-    steps:
-      - uses: actions/checkout@v4
+    needs: ci
 
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Create lowercase image name for GHCR
+      - name: Set image name (lowercase)
+        run: |
+          echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+
+      # Login to GitHub Container Registry
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
@@ -25,12 +36,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push
+      # Build and push Docker image
+      - name: Build and push image
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}:latest
-            ghcr.io/${{ github.repository }}:${{ github.sha }}
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
 
