@@ -26,7 +26,10 @@ def ui():
     return FileResponse(STATIC_DIR / "index.html")
 
 # Create database tables on startup (simple approach for demo project)
-Base.metadata.create_all(bind=engine)
+# Create tables when the app starts (not during import)
+@app.on_event("startup")
+def on_startup():
+    Base.metadata.create_all(bind=engine)
 
 # Dependency for database session
 def get_db():

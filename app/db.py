@@ -1,24 +1,17 @@
-# Database configuration and session management
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
-import os
 
-# Database connection string from environment variables
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql+psycopg2://dev:dev@db:5432/devdb",
-)
+# If DATABASE_URL is not provided (e.g. GitHub Actions), use SQLite locally
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+pysqlite:///./dev.db")
 
-engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+connect_args = {}
+if DATABASE_URL.startswith("sqlite"):
+    connect_args = {"check_same_thread": False}
 
-# Session factory
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine,
-)
+engine = create_engine(DATABASE_URL, pool_pre_ping=True, connect_args=connect_args)
 
-# Base class for ORM models
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
 class Base(DeclarativeBase):
     pass
-
