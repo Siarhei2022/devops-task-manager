@@ -24,4 +24,5 @@ jobs:
       - name: Tests
         env:
           PYTHONPATH: ${{ github.workspace }}
+          DATABASE_URL: sqlite+pysqlite:///./ci.db
         run: pytest -q
