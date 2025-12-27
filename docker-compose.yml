@@ -1,29 +1,41 @@
 services:
+  # Container 1: PostgreSQL database service
   db:
-    image: postgres:16-alpine
+    image: postgres:16-alpine # Official image
     environment:
-      POSTGRES_USER: dev
-      POSTGRES_PASSWORD: dev
-      POSTGRES_DB: devdb
+      POSTGRES_USER: taskapp_user      # database username
+      POSTGRES_PASSWORD: taskapp_psw   # database password 
+      POSTGRES_DB: taskapp_db          # database name
     volumes:
       - db_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dev -d devdb"]
+      - "5432:5432" # expose PostgreSQL port outside Docker (optional, for debugging, we need to remove it for production)
+    healthcheck:    # ensure DB is ready before app starts
+      # Docker runs the command pg_isready ... inside the db container
+      # if the command says “ready”, container becomes healthy
+      # until then it stays starting/unhealthy
+      # Then depends_on: condition: service_healthy tells Compose:
+      # start api only after db becomes healthy
+      test: ["CMD-SHELL", "pg_isready -U taskapp_user -d taskapp_db"]
       interval: 5s
       timeout: 3s
       retries: 20
 
+  # Container 2 - Application Backend Service
   api:
-    build: .
+    build: .  # Build image locally using Dockerfile
     environment:
-      DATABASE_URL: postgresql+psycopg2://dev:dev@db:5432/devdb
+      # Database connection string used by the application
+      # "postgresql+psycopg2" means "Use PostgreSQL as the database, and connect to it using the psycopg2 driver"
+      # for mysql for example: sqlite+pysqlite:///file.db
+      DATABASE_URL: postgresql+psycopg2://taskapp_user:taskapp_psw@db:5432/taskapp_db
     depends_on:
       db:
         condition: service_healthy
-    ports:
+    ports: # Expose application port
       - "8000:8000"
 
 volumes:
-  db_data:
+  # the database is stored in a Docker volume -> it's persisted as long as the Docker volume exists
+  # and survives container restarts
+  db_data: # Volume for PostgreSQL persistent data

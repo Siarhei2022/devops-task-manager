@@ -4,7 +4,7 @@ from pathlib import Path
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from .db import SessionLocal, engine, Base
+from .db import SessionLocal, engine, OrmModelBase
 from .crud import (
     create_task,
     list_tasks,
@@ -14,7 +14,7 @@ from .crud import (
 )
 
 # FastAPI application instance
-app = FastAPI(title="DevOps Project - Task Manager")
+app = FastAPI(title="Task Manager")
 
 # Serve static files (frontend)
 STATIC_DIR = Path(__file__).parent / "static"
@@ -29,7 +29,7 @@ def ui():
 # Create tables when the app starts (not during import)
 @app.on_event("startup")
 def on_startup():
-    Base.metadata.create_all(bind=engine)
+    OrmModelBase.metadata.create_all(bind=engine)
 
 # Dependency for database session
 def get_db():

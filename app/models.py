@@ -2,10 +2,10 @@ from datetime import datetime, timezone
 from sqlalchemy import Integer, String, DateTime
 from sqlalchemy.orm import Mapped, mapped_column
 
-from .db import Base
+from .db import OrmModelBase
 
 # Database model representing a task in the system
-class Task(Base):
+class Task(OrmModelBase):
     __tablename__ = "tasks"
 
     # Primary key

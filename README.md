@@ -61,14 +61,12 @@ daty utworzenia i modyfikacji
 Dzieki zastosowaniu ORM struktura bazy danych jest tworzona automatycznie.
 
 app/crud.py
-
 Plik crud.py zawiera logike operacji na bazie danych.
 To tutaj znajduja sie funkcje odpowiedzialne za tworzenie, pobieranie, aktualizacje oraz usuwanie zadan.
 
 Oddzielenie tej logiki od pliku main.py sprawia, ze kod jest bardziej uporzadkowany i latwiejszy do testowania.
 
 app/static/index.html
-
 Plik index.html jest prostym frontendem aplikacji.
 Zostal napisany w czystym HTML i JavaScript, bez dodatkowych frameworkow.
 
@@ -94,7 +92,6 @@ wykorzystuje reusable workflows
 Dzieki temu proces budowania i testowania aplikacji jest w pelni zautomatyzowany.
 
 requirements.txt
-
 Plik requirements.txt zawiera liste bibliotek Pythona wymaganych do uruchomienia aplikacji.
 Jest wykorzystywany zarowno lokalnie, jak i w Dockerze oraz pipeline CI.
 
