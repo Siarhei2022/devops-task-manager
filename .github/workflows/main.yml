@@ -1,4 +1,4 @@
-name: Main - CI + Build & Push
+name: Main-CI+Build+Push
 
 on:
   push:
@@ -10,11 +10,11 @@ permissions:
   packages: write
 
 jobs:
-  # ---------- CI (tests + lint) ----------
+  # CI:tests+lint
   ci:
-    uses: ./.github/workflows/reusable-ci.yml
+    uses: ./.github/workflows/ci-checks.yml
 
-  # ---------- Build & Push Docker image ----------
+  # Build and Push Docker image
   build-and-push:
     runs-on: ubuntu-latest
     needs: ci
