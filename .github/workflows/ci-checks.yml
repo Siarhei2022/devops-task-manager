@@ -1,0 +1,46 @@
+# Name of the reusable workflow
+name: ci-checks
+
+# This workflow is not triggered directly by events like push or PR.
+# It can only be called from another workflow using "uses".
+on:
+  workflow_call:
+
+jobs:
+  # Single job responsible for code quality checks
+  lint-and-test:
+
+    # Use the latest Ubuntu runner provided by GitHub
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository source code
+      - uses: actions/checkout@v4
+
+      # Step 2: Set up Python environment
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Step 3: Install project dependencies
+      # - Upgrade pip
+      # - Install all Python packages from requirements.txt
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Step 4: Run code linting using Ruff
+      # This checks code style and common programming errors
+      - name: Lint (ruff)
+        run: ruff check .
+
+      # Step 5: Run automated tests using pytest
+      # - PYTHONPATH allows importing the app package
+      # - DATABASE_URL is set to SQLite for CI testing
+      #   (no external database is required in CI)
+      - name: Tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          DATABASE_URL: sqlite+pysqlite:///./ci.db
+        run: pytest -q
