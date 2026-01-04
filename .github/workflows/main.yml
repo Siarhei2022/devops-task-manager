@@ -46,3 +46,11 @@ jobs:
             ${{ env.IMAGE_NAME }}:latest
             ${{ env.IMAGE_NAME }}:${{ github.sha }}
 
+      # Smoke test: run the published image and check /health
+      - name: Smoke test published image (custom action)
+        uses: ./.github/actions/docker-smoke-test
+        with:
+          image: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          port: "8000"
+          path: "/health"
+          timeout_seconds: "30"

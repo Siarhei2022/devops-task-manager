@@ -1,0 +1,30 @@
+name: "Docker image smoke test"
+description: "Runs a Docker image and checks the /health endpoint."
+inputs:
+  image:
+    description: "Full image reference, e.g. ghcr.io/user/repo:tag"
+    required: true
+  port:
+    description: "Host port to expose the container on"
+    required: false
+    default: "8000"
+  path:
+    description: "Health endpoint path"
+    required: false
+    default: "/health"
+  timeout_seconds:
+    description: "How long to wait for the app to become healthy"
+    required: false
+    default: "30"
+
+runs:
+  using: "composite"
+  steps:
+    - shell: bash
+      run: ./.github/actions/docker-smoke-test/entrypoint.sh
+      env:
+        IMAGE: ${{ inputs.image }}
+        PORT: ${{ inputs.port }}
+        PATHNAME: ${{ inputs.path }}
+        TIMEOUT_SECONDS: ${{ inputs.timeout_seconds }}
+
