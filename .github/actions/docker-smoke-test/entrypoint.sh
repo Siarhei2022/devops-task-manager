@@ -20,7 +20,14 @@ echo "Pulling image (if needed)..."
 docker pull "${IMAGE}"
 
 echo "Starting container..."
-docker run -d --name "${CONTAINER_NAME}" -p "${PORT}:8000" "${IMAGE}" >/dev/null
+
+# Build docker run args
+RUN_ARGS=( -d --name "${CONTAINER_NAME}" -p "${PORT}:8000" )
+if [[ -n "${DATABASE_URL:-}" ]]; then
+  RUN_ARGS+=( -e "DATABASE_URL=${DATABASE_URL}" )
+fi
+
+docker run "${RUN_ARGS[@]}" "${IMAGE}" >/dev/null
 
 echo "Waiting for app to become healthy..."
 deadline=$((SECONDS + TIMEOUT_SECONDS))
@@ -37,4 +44,3 @@ done
 
 echo "OK: Health check passed."
 curl -fsS "http://localhost:${PORT}${PATHNAME}" || true
-

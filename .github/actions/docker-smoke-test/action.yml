@@ -16,6 +16,10 @@ inputs:
     description: "How long to wait for the app to become healthy"
     required: false
     default: "30"
+  database_url:
+    description: "DATABASE_URL passed into the container"
+    required: false
+    default: ""
 
 runs:
   using: "composite"
@@ -27,4 +31,5 @@ runs:
         PORT: ${{ inputs.port }}
         PATHNAME: ${{ inputs.path }}
         TIMEOUT_SECONDS: ${{ inputs.timeout_seconds }}
+        DATABASE_URL: ${{ inputs.database_url }}
 
