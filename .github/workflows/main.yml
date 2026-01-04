@@ -54,3 +54,4 @@ jobs:
           port: "8000"
           path: "/health"
           timeout_seconds: "30"
+          database_url: "sqlite+pysqlite:///./smoke.db"
